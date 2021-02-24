@@ -37,10 +37,10 @@ int main(int argc, char *argv[])
     int k = atoi(argv[2]);
     long long i;
     complexd *U = new complexd[4]; //U[i][j] <-> *(U + i * 2 + j)
-    *(U + 1 * 2 + 0) = 0;
-    *(U + 0 * 2 + 1) = 1;
-    *(U + 1 * 2 + 0) = 1;
-    *(U + 1 * 2 + 1) = 0;
+    *(U + 0 * 2 + 0) = 1.0 / sqrt(2);
+    *(U + 0 * 2 + 1) = 1.0 / sqrt(2) ;
+    *(U + 1 * 2 + 0) = 1.0 / sqrt(2);
+    *(U + 1 * 2 + 1) = - 1.0 / sqrt(2);
     
     long long length = 1 << n;
 
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     finish = omp_get_wtime();
     
     finish -= start;
-    std::cout << finish;
+    std::cout << finish << std::endl;
     
     delete [] U;
     delete [] v;
