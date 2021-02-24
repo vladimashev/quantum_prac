@@ -2,8 +2,8 @@
 #include <complex>
 #include "stdlib.h"
 #include "omp.h"
-// command line: ./Task1 n k  
-// argv             0    1 2
+// command line:  ./Task1 n k  
+// argv              0    1 2
 typedef std::complex<double> complexd;
 
 
