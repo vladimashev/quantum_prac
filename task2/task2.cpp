@@ -10,7 +10,7 @@
 typedef std::complex<double> complexd;
 
 
-void OneQubitEvolution(complexd *in, complexd *out, complexd *U, int n, int k, long long size)
+void OneQubitEvolution(complexd *in, complexd *out, complexd *U, int n, int k, long long size, int rank)
 {
     //size here is a count of elements per process
     int first_bit = rank * size;
@@ -28,9 +28,10 @@ void OneQubitEvolution(complexd *in, complexd *out, complexd *U, int n, int k, l
             *(out + i) = *(U + k_bit * 2 + 0) * *(in + k_bit_to_zero) + *(U + k_bit * 2 + 1) * *(in + k_bit_to_one);
         }
         
-    } else 
+    } 
+    else 
     {
-        MPI_Sendrecv(in, size, MPI_DOUBLE_COMPLEX, rankChange, 0, out, size, MPI_DOUBLE_COMPLEX, rankChange, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+        MPI_Sendrecv(in, size, MPI_DOUBLE_COMPLEX, rank_inverse_bit, 0, out, size, MPI_DOUBLE_COMPLEX, rank_inverse_bit, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         int k_bit = (first_bit & mask) >> shift;
         if (k_bit == 1) 
         { 
@@ -38,7 +39,8 @@ void OneQubitEvolution(complexd *in, complexd *out, complexd *U, int n, int k, l
             {
                 *(out + i) = *(U + k_bit * 2 + 0) * *(out + i) + *(U + k_bit * 2 + 1) * *(in + i);
             }
-        } else 
+        } 
+        else 
         {
             for (int i = 0; i < size; ++i) 
             {
@@ -101,11 +103,12 @@ int main(int argc, char *argv[])
 
         double module = 0.0;
         double norm = 0.0;
+        double sum = 0.0;
         for (int i = 0; i < count_of_elements; ++i) 
         {
             srand(rank * count_of_elements + i);
-            arr[i] = complexd(rand(), rand());
-            double curr_abs = abs(arr[i]);
+            elements[i] = complexd(rand(), rand());
+            double curr_abs = abs(elements[i]);
             sum += curr_abs * curr_abs;
         }
 
@@ -124,10 +127,10 @@ int main(int argc, char *argv[])
 
     double start, finish;
     start = MPI_Wtime();
-    OneQubitEvolution(elements, new_elements, U, n, k, count_of_elements);
+    OneQubitEvolution(elements, new_elements, U, n, k, count_of_elements, rank);
     finish = MPI_Wtime();
     finish -= start;
-
+    int shift;
     
     #ifdef TEST
     
@@ -137,19 +140,19 @@ int main(int argc, char *argv[])
         MPI_File file;
         MPI_File_open(MPI_COMM_WORLD, "testdata", MPI_MODE_RDONLY, MPI_INFO_NULL, &file); 
         
-        double *buffer = new double[2];
-        int shift = count_of_elements * rank * sizeof(buffer);
+        double *testbuffer = new double[2];
+        shift = count_of_elements * rank * sizeof(testbuffer);
         
         MPI_File_seek(file, shift, MPI_SEEK_SET);
         
         for (int i = 0; i < count_of_elements; ++i) 
         {
-            MPI_File_read(file, buffer, 2, MPI_DOUBLE, MPI_STATUS_IGNORE);
-            right_elements[i] = complexd(buffer[0], buffer[1]);
+            MPI_File_read(file, testbuffer, 2, MPI_DOUBLE, MPI_STATUS_IGNORE);
+            right_elements[i] = complexd(testbuffer[0], testbuffer[1]);
         }
         
         MPI_File_close(&file);
-        delete [] buffer;
+        delete [] testbuffer;
         
         //compare two vectors
         int is_right = 1;
@@ -162,15 +165,15 @@ int main(int argc, char *argv[])
                 break;
             }
         }
-        MPI_Reduce(is_right, correct_flag, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce(&is_right, &correct_flag, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
         
         if ((rank == 0) && (correct_flag == size))
         {
             std::cout << "CORRECT RESULT!" << std::endl;
         }
-        else
+        else if (rank == 0)
         {
-            std::cout << "WRONG RESULT!" << std::endl;
+            std::cout << "WRONG RESULT!" << correct_flag << std::endl;
         }
         
     #endif
@@ -179,19 +182,24 @@ int main(int argc, char *argv[])
     MPI_File_open(MPI_COMM_WORLD, RESFILE, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &data);
     
     double *buffer = new double[2];
-    int shift = count_of_elements * rank * sizeof(buffer);
+    shift = count_of_elements * rank * sizeof(buffer);
         
     MPI_File_seek(data, shift, MPI_SEEK_SET);
     for (int i = 0; i < count_of_elements; ++i) {
         buffer[0] = new_elements[i].real();
         buffer[1] = new_elements[i].imag();
-        MPI_File_write(file, buffer, 2, MPI_DOUBLE, MPI_STATUS_IGNORE);
+        MPI_File_write(data, buffer, 2, MPI_DOUBLE, MPI_STATUS_IGNORE);
     }
     MPI_File_close(&data);
     delete [] buffer;
     
-    
-    std::cout << "TIME: " << finish << std::endl;
+    double time;
+    MPI_Reduce(&finish, &time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+    if (rank == 0) 
+    {
+        std::cout << "TIME: " << time << std::endl;    
+    }
+
     
     delete [] U;
     delete [] new_elements;
