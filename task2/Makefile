@@ -1,8 +1,8 @@
 task2: task2.cpp
-	mpic++ -o task2.cpp task2
+	mpic++ task2.cpp -o task2
 
 task2_testmode: task2.cpp
-	mpic++ -D TEST=1 task2.cpp task2
+	mpic++ -D TEST=1 task2.cpp -o task2
 
 run: task2
 	mpirun -np 2 ./task2 20 1 1
