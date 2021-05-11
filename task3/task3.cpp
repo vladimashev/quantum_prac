@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <complex>
 #include "stdlib.h"
 #include <mpi.h>
@@ -230,7 +231,10 @@ int main(int argc, char *argv[])
     
     if (rank == 0) 
     {
-        std::cout << "LOSS: " << 1.0 - Fidelity << std::endl;    
+        //std::cout << "LOSS: " << 1.0 - Fidelity << std::endl;
+        std::ofstream output("loss.txt", std::ios_base::app);
+        output << 1.0 - Fidelity << std::endl;
+        output.close();    
     }
     
     delete [] buffer;
