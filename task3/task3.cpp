@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
     }
     MPI_Reduce(&sum, &tmp, 1, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, MPI_COMM_WORLD);
     Fidelity = abs(tmp) * abs(tmp);
-    
+    MPI_File_close(&data);
     if (rank == 0) 
     {
         //std::cout << "LOSS: " << 1.0 - Fidelity << std::endl;
