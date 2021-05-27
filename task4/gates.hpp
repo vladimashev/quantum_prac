@@ -42,17 +42,22 @@ void OneQubitEvolution(complexd *in, complexd *out, complexd *U, int n, int k, l
             }
         }
     }
+    
+    for (int i = 0; i < size; ++i)
+    {
+        *(in + i) = *(out + i);
+    }
     return;
 }
 
 
-void TwoQubitEvolution(complexd *buf0, complexd *buf1, complexd *buf2, complexd *buf3, complexd U[4][4], int n, int k, int l, int rank, int size) 
+void TwoQubitEvolution(complexd *buf0, complexd *buf1, complexd *buf2, complexd *buf3, complexd *U, unsigned int n, unsigned int k, unsigned int l, unsigned int rank, int size) 
 {
     unsigned N = 1u << n;
     complexd *buf_ans;
     buf_ans = new complexd[size];
     unsigned first_index = rank * size;
-    if(l > k)
+    if (l > k)
     {
        	int buffer = k;
        	k = l;
@@ -72,7 +77,7 @@ void TwoQubitEvolution(complexd *buf0, complexd *buf1, complexd *buf2, complexd 
 		int q1 = 1 << shift1;
 		int q2 = 1 << shift2;
 
-        for (int i = rank * size; i < rank * size + size; i++) 
+        for (int i = rank * size; i < rank * size + size; ++i) 
         {
         	int first = i & ~q1 & ~q2;
 			int second = i & ~q1 | q2;
@@ -83,7 +88,7 @@ void TwoQubitEvolution(complexd *buf0, complexd *buf1, complexd *buf2, complexd 
 			int iq = (iq1 << 1) + iq2;
 		
 			*(buf_ans + i - rank * size) = 
-                *(U + iq * 4 + (0 << 1) + 0] * *(buf0 + first - rank * size) 
+                *(U + iq * 4 + (0 << 1) + 0) * *(buf0 + first - rank * size) 
                 + *(U + iq * 4 + (0 << 1) + 1) * *(buf0 + second - rank * size) 
                 + *(U + iq * 4 + (1 << 1) + 0) * *(buf0 + third - rank * size) 
                 + *(U + iq * 4 + (1 << 1) + 1) * *(buf0 + fourth - rank * size);
@@ -95,7 +100,7 @@ void TwoQubitEvolution(complexd *buf0, complexd *buf1, complexd *buf2, complexd 
 		int shift2 = l -1;
 		int q1 = 1 << shift1;
 		int q2 = 1 << shift2;
-        for (int i = size * rank; i < rank * size + size; i++) 
+        for (int i = size * rank; i < rank * size + size; ++i) 
         {
         	int first = i & ~q1 & ~q2;
 			int second = i & ~q1 | q2;
@@ -104,7 +109,7 @@ void TwoQubitEvolution(complexd *buf0, complexd *buf1, complexd *buf2, complexd 
 			int iq1 = (i & q1) >> shift1;
 			int iq2 = (i & q2) >> shift2;
 
-			int iq=(iq1<<1)+iq2;
+			int iq = (iq1 << 1) + iq2;
 			if (first < size * rank || first >= size * (rank + 1))
             {
 				first -= rank1_change * size;
@@ -113,9 +118,9 @@ void TwoQubitEvolution(complexd *buf0, complexd *buf1, complexd *buf2, complexd 
 				fourth -= rank * size;
 				*(buf_ans + i - size * rank) = 
                     *(U + iq * 4 + (0 << 1) + 0) * *(buf1 + first) 
-                    + *(U + iq * 4 (0 << 1) + 1) * *(buf1 + second) 
-                    + *(U + iq * 4 + (1 << 1) + 0) * buf0[third] 
-                    + U[iq][(1<<1)+1] * buf0[fourth];
+                    + *(U + iq * 4 + (0 << 1) + 1) * *(buf1 + second) 
+                    + *(U + iq * 4 + (1 << 1) + 0) * *(buf0 + third) 
+                    + *(U + iq * 4 + (1 << 1) + 1) * *(buf0 + fourth);
 			} else
             {
 				third -= rank1_change * size;
@@ -141,7 +146,7 @@ void TwoQubitEvolution(complexd *buf0, complexd *buf1, complexd *buf2, complexd 
 		int q1 = 1 << shift1;
 		int q2 = 1 << shift2;
 
-        for (int i = size * rank; i < size * rank + size; i++) 
+        for (int i = size * rank; i < size * rank + size; ++i) 
         {
            	int first = i & ~q1 & ~q2;
 			int second = i & ~q1 | q2;
@@ -173,7 +178,7 @@ void TwoQubitEvolution(complexd *buf0, complexd *buf1, complexd *buf2, complexd 
 			if (rank * size <= second && second < rank * size + size)
             {
 				second -= rank*size;
-				*(buf_ans + i - size * rank) += *(U + iq * 4 + (0 << 1) + 1] * *(buf0 + second);
+				*(buf_ans + i - size * rank) += *(U + iq * 4 + (0 << 1) + 1) * *(buf0 + second);
 			} else if (rank1_change *size <= second && second < rank1_change * size + size)
             {
 				second -= rank1_change*size;
@@ -218,7 +223,7 @@ void TwoQubitEvolution(complexd *buf0, complexd *buf1, complexd *buf2, complexd 
 				*(buf_ans + i - size * rank) += *(U + iq * 4 + (1 << 1) + 1) * *(buf1 + fourth);
             } else if (rank2_change * size <= fourth && fourth < rank2_change * size + size)
             {
-            	fourth -= rank2_change*size;
+            	fourth -= rank2_change * size;
 				*(buf_ans + i - size * rank) += *(U + iq * 4 + (1 << 1) + 1) * *(buf2 + fourth);
 			} else if (rank3_change * size <= fourth && fourth < rank3_change * size + size)
             {
@@ -235,23 +240,24 @@ void TwoQubitEvolution(complexd *buf0, complexd *buf1, complexd *buf2, complexd 
 }
 
 
-void NOT(int k, complexd *buf0, int rank, int size, int n)
+void NOT(unsigned int k, complexd *buf0, int rank, int size, unsigned int n)
 {
     complexd *buf1;
     unsigned N = 1u << n;
     unsigned seg_size = N / size;
     buf1 = new complexd[seg_size];
     complexd *U = new complexd[4];
-    *(U + 0 * 2 + 0) = 0.0
+    *(U + 0 * 2 + 0) = 0.0;
     *(U + 0 * 2 + 1) = 1.0;
     *(U + 1 * 2 + 0) = 1.0;
     *(U + 1 * 2 + 1) = 0.0;
-    OneQubitEvolution(buf0, buf1, U, n, k, rank, seg_size);
+    OneQubitEvolution(buf0, buf1, U, n, k, seg_size, rank);
     delete [] U;
+    delete [] buf1;
 }
 
 
-void CNOT(int k, int l, complexd *buf0, int rank, int size, int n) 
+void CNOT(unsigned int k, int l, complexd *buf0, int rank, int size, unsigned int n) 
 {
     complexd *buf1, *buf2, *buf3;
     unsigned N = 1u << n;
@@ -259,7 +265,7 @@ void CNOT(int k, int l, complexd *buf0, int rank, int size, int n)
     buf1 = new complexd[seg_size];
     buf2 = new complexd[seg_size];
     buf3 = new complexd[seg_size];
-     complexd *U = new complexd[16];
+    complexd *U = new complexd[16];
     for (int i = 0; i < 4; i++) 
     {
         for (int j = 0; j < 4; j++) 
@@ -267,35 +273,39 @@ void CNOT(int k, int l, complexd *buf0, int rank, int size, int n)
             *(U + i * 4 + j) = 0.0;
         }
     }
-    *(U + 0 * 4 + 0) = 1.0
+    *(U + 0 * 4 + 0) = 1.0;
     *(U + 1 * 4 + 1) = 1.0;
     *(U + 2 * 4 + 3) = 1.0;
     *(U + 3 * 4 + 2) = 1.0;
     TwoQubitEvolution(buf0, buf1, buf2, buf3, U, n, k, l, rank, seg_size);
     delete [] U;
+    delete []  buf1;
+    delete []  buf2;
+    delete []  buf3;
 }
 
 
-void H(int k, complexd *buf0, int rank, int size, int n) 
+void H(unsigned int k, complexd *in, int rank, int size, unsigned int n) 
 {
-    complexd *buf1;
-    unsigned N = 1u << n;
-    unsigned seg_size = N / size;
-    buf1 = new complexd[seg_size];
+    complexd *out;
+    int N = 1u << n;
+    int seg_size = N / size;
+    out = new complexd[seg_size];
     complexd *U = new complexd[4];
     *(U + 0 * 2 + 0) = 1.0 / sqrt(2);
     *(U + 0 * 2 + 1) = 1.0 / sqrt(2) ;
     *(U + 1 * 2 + 0) = 1.0 / sqrt(2);
     *(U + 1 * 2 + 1) = - 1.0 / sqrt(2);
-    OneQubitEvolution(buf0, buf1, U, n, k, rank, seg_size);
+    OneQubitEvolution(in, out, U, n, k, seg_size, rank);
     delete [] U;
+    delete [] out;
 }
 
 void H_n(unsigned k, unsigned l, complexd *buf0, int rank, int size, unsigned n) 
 {
     complexd *buf1, *buf2, *buf3;
-    unsigned N = 1u << n;
-    unsigned seg_size = N / size;
+    int N = 1u << n;
+    int seg_size = N / size;
     buf1 = new complexd[seg_size];
     buf2 = new complexd[seg_size];
     buf3 = new complexd[seg_size];
@@ -307,7 +317,7 @@ void H_n(unsigned k, unsigned l, complexd *buf0, int rank, int size, unsigned n)
             *(U + i * 4 + j) = 0.5;
         }
     }
-    *(U + 1 * 4 + 1) = -0.5
+    *(U + 1 * 4 + 1) = -0.5;
     *(U + 1 * 4 + 3) = -0.5;
     *(U + 2 * 4 + 2) = -0.5;
     *(U + 2 * 4 + 3) = -0.5;
@@ -315,28 +325,32 @@ void H_n(unsigned k, unsigned l, complexd *buf0, int rank, int size, unsigned n)
     *(U + 3 * 4 + 2) = -0.5;
     TwoQubitEvolution(buf0, buf1, buf2, buf3, U, n, k, l, rank, seg_size);
     delete [] U;
+    delete []  buf1;
+    delete []  buf2;
+    delete []  buf3;
 }
 
 void ROT(unsigned k, complexd *buf0, int rank, int size, unsigned n) 
 {
     complexd *buf1;
-    unsigned N = 1u << n;
-    unsigned seg_size = N / size;
+    int N = 1u << n;
+    int seg_size = N / size;
     buf1 = new complexd[seg_size];
     complexd *U = new complexd[4];
     *(U + 0 * 2 + 0) = 1.0;
     *(U + 0 * 2 + 1) = 0.0;
     *(U + 1 * 2 + 0) = 0.0;
     *(U + 1 * 2 + 1) = - 1.0;
-    OneQubitEvolution(buf0, buf1, U, n, k, rank, seg_size);
+    OneQubitEvolution(buf0, buf1, U, n, k, seg_size, rank);
     delete [] U;
+    delete [] buf1;
 }
 
 void CROT(unsigned k, unsigned l, complexd *buf0, int rank, int size, unsigned n) 
 {
     complexd *buf1, *buf2, *buf3;
-    unsigned N = 1u << n;
-    unsigned seg_size = N / size;
+    int N = 1u << n;
+    int seg_size = N / size;
     buf1 = new complexd[seg_size];
     buf2 = new complexd[seg_size];
     buf3 = new complexd[seg_size];
@@ -348,10 +362,13 @@ void CROT(unsigned k, unsigned l, complexd *buf0, int rank, int size, unsigned n
            *(U + i * 4 + j) = 0.0;
         }
     }
-    *(U + 0 * 4 + 0) = 1.0
+    *(U + 0 * 4 + 0) = 1.0;
     *(U + 1 * 4 + 1) = 1.0;
     *(U + 2 * 4 + 2) = 1.0;
     *(U + 3 * 4 + 3) = -1.0;
     TwoQubitEvolution(buf0, buf1, buf2, buf3, U, n, k, l, rank, seg_size);
     delete [] U;
+    delete []  buf1;
+    delete []  buf2;
+    delete []  buf3;
 }
